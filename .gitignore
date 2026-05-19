@@ -1,0 +1,37 @@
+# Dependencies
+/vendor/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+
+# Sessions
+/storage/sessions/*
+!/storage/sessions/.gitkeep
+
+# Database schema / migrations (keep private)
+/database/
+*.sql
+
+# Exported reports (generated files)
+/assets/img/*.xls
+/assets/img/*.xlsx
+/assets/img/*.csv
+
+# Logs
+*.log
+/storage/logs/
+
+# IDE
+.idea/
+.vscode/
+*.sublime-*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Composer (keep composer.lock committed for reproducible installs)
+composer.phar

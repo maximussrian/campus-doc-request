@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+vendor/
+storage/sessions/*
+!storage/sessions/.gitkeep
+storage/logs/*
+.git
+.github
+*.sql
+.idea
+.vscode
+database/

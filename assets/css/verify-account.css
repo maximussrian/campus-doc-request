@@ -1,0 +1,161 @@
+/* ===== Verify Account Page ===== */
+
+/* Override multi-panel layout only on verify page */
+.verify-body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.verify-body .login {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  height: auto;
+  overflow: visible;
+}
+
+.verify-body .login.container.grid {
+  display: block;
+  width: 100%;
+  max-width: 1120px;
+  margin-inline: auto;
+}
+
+.verify-body .login__access {
+  position: static;
+  transform: none;
+  width: 100%;
+  padding: 7rem 1.5rem 3.5rem;
+}
+
+@media screen and (min-width: 768px) {
+  .verify-body .login__access {
+    max-width: 460px;
+    margin-left: 1.5rem;
+  }
+}
+
+.verify__email-display {
+  display: flex;
+  align-items: center;
+  gap: .85rem;
+  background: hsl(220, 50%, 96%);
+  border-radius: 1rem;
+  padding: .9rem 1.1rem;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid var(--first-color);
+}
+
+.verify__email-display i {
+  font-size: 1.6rem;
+  color: var(--first-color);
+  flex-shrink: 0;
+}
+
+.verify__email-label {
+  font-size: var(--tiny-font-size);
+  color: var(--text-color);
+  margin: 0 0 2px;
+}
+
+.verify__email-value {
+  font-size: var(--small-font-size);
+  font-weight: var(--font-semi-bold);
+  color: var(--title-color);
+  margin: 0;
+  word-break: break-all;
+}
+
+/* OTP input boxes */
+.verify__otp-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: 1.25rem;
+}
+
+.verify__otp-box {
+  width: 46px;
+  height: 54px;
+  border: 2px solid hsl(220, 50%, 85%);
+  border-radius: .75rem;
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-family: var(--body-font);
+  color: var(--title-color);
+  background: var(--body-color);
+  transition: border-color .2s, box-shadow .2s;
+  outline: none;
+  caret-color: transparent;
+}
+
+.verify__otp-box:focus {
+  border-color: var(--first-color);
+  box-shadow: 0 0 0 3px rgba(221, 4, 38, .12);
+}
+
+.verify__otp-box.filled {
+  border-color: var(--first-color);
+  background: hsl(350, 100%, 98%);
+}
+
+.verify__otp-dash {
+  font-size: 1.2rem;
+  color: var(--text-color);
+  margin: 0 .1rem;
+}
+
+/* Timer */
+.verify__timer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  font-size: var(--small-font-size);
+  color: var(--text-color);
+  margin-bottom: 1.25rem;
+}
+
+.verify__timer i { color: var(--first-color); }
+
+#countdown {
+  font-weight: var(--font-semi-bold);
+  color: var(--first-color);
+}
+
+.verify__expired {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  font-size: var(--small-font-size);
+  color: #dc3545;
+  font-weight: var(--font-semi-bold);
+  margin-bottom: 1.25rem;
+}
+
+.verify__expired i { font-size: 1rem; }
+
+.hidden { display: none !important; }
+
+/* Shake animation for wrong OTP */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-6px); }
+  40%       { transform: translateX(6px); }
+  60%       { transform: translateX(-4px); }
+  80%       { transform: translateX(4px); }
+}
+
+.verify__otp-wrap.shake { animation: shake .4s ease; }
+
+/* Success state */
+.verify__otp-box.success {
+  border-color: #198754;
+  background: hsl(145, 60%, 97%);
+  color: #198754;
+}

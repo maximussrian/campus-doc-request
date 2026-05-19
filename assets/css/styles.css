@@ -1,0 +1,585 @@
+/*=============== GOOGLE FONTS ===============*/
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@100..900&display=swap");
+
+/*=============== VARIABLES CSS ===============*/
+:root {
+  /*========== Colors ==========*/
+  /*Color mode HSL(hue, saturation, lightness)*/
+  --first-color: #DD0426;
+  --first-color-alt: #c00321;
+  --title-color: hsl(220, 68%, 4%);
+  --white-color: hsl(0, 0%, 100%);
+  --text-color: hsl(220, 15%, 66%);
+  --body-color: hsl(0, 0%, 100%);
+  --container-color: hsl(220, 50%, 97%);
+
+  /*========== Font and typography ==========*/
+  /*.5rem = 8px | 1rem = 16px ...*/
+  --body-font: "Montserrat", system-ui;
+  --big-font-size: 1.5rem;
+  --normal-font-size: .938rem;
+  --small-font-size: .813rem;
+  --tiny-font-size: .688rem;
+
+  /*========== Font weight ==========*/
+  --font-regular: 400;
+  --font-medium: 500;
+  --font-semi-bold: 600;
+
+  /*========== z index ==========*/
+  --z-tooltip: 10;
+  --z-fixed: 100;
+}
+
+/*========== Responsive typography ==========*/
+@media screen and (min-width: 1150px) {
+  :root {
+    --big-font-size: 3rem;
+    --normal-font-size: 1rem;
+    --small-font-size: .875rem;
+    --tiny-font-size: .75rem;
+  }
+}
+
+/*=============== BASE ===============*/
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+body,
+input,
+button {
+  font-family: var(--body-font);
+  font-size: var(--normal-font-size);
+}
+
+body {
+  background-color: var(--body-color);
+  color: var(--text-color);
+  overflow-x: hidden;
+}
+
+input,
+button {
+  border: none;
+  outline: none;
+}
+
+a {
+  text-decoration: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/*=============== REUSABLE CSS CLASSES ===============*/
+.container {
+  max-width: 1120px;
+  margin-inline: 1.5rem;
+}
+
+.grid {
+  display: grid;
+  gap: 1rem;
+}
+
+/*=============== LOGIN  ===============*/
+.login {
+  position: relative;
+  min-height: 100vh;
+  align-items: center;
+  overflow-x: hidden;
+  overflow-y: auto;
+  width: 100%;
+  max-width: 100vw;
+}
+
+.login__blob {
+  display: none;
+}
+
+.login__logo-wrap {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 1.25rem;
+}
+
+.login__logo {
+  display: block;
+  width: 110px;
+  height: 110px;
+  object-fit: contain;
+}
+
+.login__title {
+  font-size: var(--big-font-size);
+  color: var(--title-color);
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.login__box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background-color: var(--container-color);
+  border-radius: 1rem;
+}
+
+.login__input {
+  background: none;
+  width: 100%;
+  padding: 1.5rem 2.5rem 1.5rem 1.25rem;
+  font-weight: var(--font-semi-bold);
+  border: 3px solid transparent;
+  border-radius: 1rem;
+  z-index: 1;
+  transition: border-color .4s;
+}
+
+.login__input:autofill {
+  transition: background-color 6000s, color 6000s;
+}
+
+.login__label {
+  position: absolute;
+  left: 1.25rem;
+  font-weight: var(--font-semi-bold);
+  transition: transform .4s, font-size .4s, color .4s;
+}
+
+.login__icon {
+  position: absolute;
+  right: 1rem;
+  font-size: 1.25rem;
+  transition: color .4s;
+}
+
+.login__select {
+  cursor: pointer;
+  appearance: auto;
+}
+
+.login__password {
+  cursor: pointer;
+  z-index: 10;
+}
+
+.login__forgot {
+  display: block;
+  width: max-content;
+  margin: 1rem 0 0 auto;
+  font-size: var(--small-font-size);
+  font-weight: var(--font-semi-bold);
+  color: var(--text-color);
+  transition: color .4s;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--body-font);
+}
+
+.login__forgot:hover {
+  color: var(--first-color);
+}
+
+.login__button {
+  width: 100%;
+  display: inline-flex;
+  justify-content: center;
+  background-color: var(--first-color);
+  color: var(--white-color);
+  font-weight: var(--font-semi-bold);
+  padding-block: 1.5rem;
+  border-radius: 4rem;
+  margin-block: 2rem;
+  cursor: pointer;
+  transition: background-color .4s, box-shadow .4s;
+}
+
+.login__button:hover {
+  background-color: var(--first-color-alt);
+  box-shadow: 0 8px 24px hsla(208, 92%, 32%, .3);
+}
+
+.login__social {
+  margin-bottom: 2rem;
+}
+
+.login__social-title {
+  text-align: center;
+  font-size: var(--small-font-size);
+  font-weight: var(--font-semi-bold);
+  color: var(--title-color);
+  margin-bottom: 1rem;
+}
+
+.login__social-img {
+  width: 1rem;
+}
+
+.login__social-links {
+  display: flex;
+  justify-content: center;
+  column-gap: 1.5rem;
+}
+
+.login__social-link {
+  width: 32px;
+  height: 32px;
+  background-color: var(--body-color);
+  box-shadow: 0 4px 8px hsla(0, 0%, 0%, .1);
+  border-radius: .5rem;
+  display: grid;
+  place-items: center;
+  transition: transform .4s;
+}
+
+.login__social-link:hover {
+  transform: translateY(-.25rem);
+}
+
+.login__switch {
+  text-align: center;
+  font-size: var(--small-font-size);
+}
+
+.login__switch button {
+  background: none;
+  color: var(--first-color);
+  font-size: var(--small-font-size);
+  font-weight: var(--font-semi-bold);
+  cursor: pointer;
+  transition: color .4s;
+}
+
+.login__switch button:hover {
+  color: var(--first-color-alt);
+}
+
+/* Panels — mobile: flow layout, desktop: absolute positioned */
+.login__access, 
+.login__register,
+.login__forgot-panel {
+  transition: transform .4s, opacity .4s .1s;
+  box-sizing: border-box;
+}
+
+/* Mobile panel layout (< 1150px) */
+@media screen and (max-width: 1149px) {
+  .login.container.grid {
+    display: block;
+    overflow: hidden;
+    position: relative;
+    margin-inline: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .login__access,
+  .login__register,
+  .login__forgot-panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    width: 100%;
+    padding: 2rem 1.5rem 3rem;
+  }
+
+  /* Active/visible panel becomes relative to drive height */
+  .login__access {
+    position: relative;
+    top: auto;
+  }
+
+  .active .login__access {
+    position: absolute;
+    top: 0;
+  }
+  .active .login__register {
+    position: relative;
+    top: auto;
+  }
+
+  .forgot-active .login__access {
+    position: absolute;
+    top: 0;
+  }
+  .forgot-active .login__forgot-panel {
+    position: relative;
+    top: auto;
+  }
+}
+
+.login__register {
+  transform: translateX(110%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.login__forgot-panel {
+  transform: translateX(-110%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.login__forgot-desc {
+  display: flex;
+  align-items: flex-start;
+  gap: .5rem;
+  font-size: var(--small-font-size);
+  color: var(--text-color);
+  background: hsl(220, 50%, 96%);
+  border-left: 3px solid var(--first-color);
+  border-radius: .5rem;
+  padding: .75rem 1rem;
+  margin-bottom: 1.25rem;
+  line-height: 1.5;
+}
+
+.login__forgot-desc i {
+  font-size: 1.1rem;
+  color: var(--first-color);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Input focus move up label */
+.login__input:focus ~ .login__label {
+  transform: translateY(-12px);
+  font-size: var(--tiny-font-size);
+}
+
+.login__input:focus {
+  padding-block: 2rem 1rem;
+}
+
+/* Input focus sticky top label */
+.login__input:not(:placeholder-shown).login__input:not(:focus) ~ .login__label {
+  transform: translateY(-12px);
+  font-size: var(--tiny-font-size);
+}
+
+.login__input:not(:placeholder-shown).login__input:not(:focus) {
+  padding-block: 2rem 1rem;
+}
+
+/* Input focus color */
+.login__input:focus {
+  border-color: var(--first-color);
+}
+
+.login__input:focus ~ .login__label,
+.login__input:focus ~ .login__icon {
+  color: var(--first-color);
+}
+
+/* ===== Show Register panel ===== */
+.active .login__access {
+  transform: translateX(-110%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.active .login__register {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: initial;
+}
+
+/* ===== Show Forgot Password panel ===== */
+.forgot-active .login__access {
+  transform: translateX(110%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.forgot-active .login__forgot-panel {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: initial;
+}
+
+/*=============== BREAKPOINTS ===============*/
+/* For small devices */
+@media screen and (max-width: 320px) {
+  .container {
+    margin-inline: 1rem;
+  }
+}
+
+/* For medium devices */
+@media screen and (min-width: 540px) {
+  .login__area {
+    width: 380px;
+    margin-inline: auto;
+  }
+  .login__access,
+  .login__register,
+  .login__forgot-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .login__title {
+    text-align: center;
+    width: 380px;
+  }
+  .login__logo-wrap {
+    width: 380px;
+  }
+}
+
+/* Mobile — ensure nothing overflows */
+@media screen and (max-width: 539px) {
+  .login__area,
+  .login__form,
+  .login__content,
+  .login__box,
+  .login__group {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .login__input {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .login__logo {
+    width: 80px;
+    height: 80px;
+  }
+  .login__title {
+    font-size: 1.4rem;
+  }
+}
+
+@media screen and (min-width: 350px) and (max-height: 600px) {
+  .login {
+    min-height: 100vh;
+    height: auto;
+  }
+}
+
+/* For large devices */
+@media screen and (min-width: 1150px) {
+  .container {
+    margin-inline: auto;
+  }
+
+  /* On desktop, restore fixed full-viewport height with absolute panels */
+  .login {
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .login.container.grid {
+    display: grid;
+    overflow: hidden;
+    margin-inline: auto;
+    width: auto;
+    max-width: 1120px;
+  }
+
+  .login__access,
+  .login__register,
+  .login__forgot-panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    padding: 0;
+    width: 600px;
+  }
+
+  .login__access {
+    transform: translateY(-50%);
+  }
+
+  .login__register {
+    transform: translateX(15rem) translateY(-50%);
+  }
+
+  .login__forgot-panel {
+    transform: translateX(-15rem) translateY(-50%);
+  }
+
+  /* Active states on desktop */
+  .active .login__access {
+    transform: translateX(-15rem);
+  }
+  .active .login__register {
+    transform: translateX(0) translateY(-50%);
+  }
+  .forgot-active .login__access {
+    transform: translateX(15rem);
+  }
+  .forgot-active .login__forgot-panel {
+    transform: translateX(0) translateY(-50%);
+  }
+
+  .login__area {
+    width: 460px;
+    margin: initial;
+  }
+  .login__access, 
+  .login__register,
+  .login__forgot-panel {
+    width: 600px;
+    display: block;
+    align-items: initial;
+  }
+  .login__title {
+    text-align: left;
+    margin-bottom: 3rem;
+    width: auto;
+  }
+  .login__logo-wrap {
+    width: auto;
+    justify-content: flex-start;
+  }
+  .login__button {
+    margin-bottom: 3rem;
+  }
+  .login__group {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .login__blob {
+    display: block;
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+  .login__img {
+    transform: translate(0rem, 0rem);
+  }
+}
+/* Email domain hint */
+.login__email-hint {
+  font-size: .72rem;
+  color: var(--text-color);
+  margin-top: -.5rem;
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+}
+.login__email-hint strong { color: var(--first-color); }
+
+/* Page slide-in animation */
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(2rem); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.login__access.page-animate,
+.login__access.page-animate ~ * {
+  animation: slideInUp .45s ease both;
+}

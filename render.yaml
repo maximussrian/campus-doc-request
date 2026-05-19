@@ -1,0 +1,30 @@
+# Render Blueprint — connect repo, set secrets in dashboard, deploy.
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: campus-doc-request
+    runtime: docker
+    plan: free
+    healthCheckPath: /index.php
+    envVars:
+      - key: APP_BASE
+        value: ""
+      - key: BASE_URL
+        sync: false
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASS
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: MAIL_FROM_NAME
+        value: Document Request

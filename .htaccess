@@ -1,0 +1,9 @@
+# Hostinger / Apache — block direct access to secrets
+<Files ".env">
+    Require all denied
+</Files>
+
+# Optional: hide composer files from web
+<FilesMatch "^(composer\.(json|lock)|\.env\.example)$">
+    Require all denied
+</FilesMatch>
