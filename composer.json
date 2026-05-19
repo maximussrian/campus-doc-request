@@ -1,5 +1,8 @@
 {
-    "name": "docu_request/app",
+    "name": "maximussrian/campus-doc-request",
+    "description": "EVSU document request management system for students, tellers, and registrars",
+    "type": "project",
+    "license": "proprietary",
     "require": {},
     "autoload": {
         "psr-4": {
