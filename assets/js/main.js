@@ -81,17 +81,64 @@ document.getElementById('registerForm')?.addEventListener('submit', async (e) =>
 
   try {
     // Send OTP to university email
-    const res  = await fetch(API + '/send-register-otp.php', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData)
+    const otpUrl = (API.replace(/\/$/, '') + '/send-register-otp.php');
+    const res = await fetch(otpUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData),
+      cache: 'no-store',
+      credentials: 'same-origin',
+      redirect: 'follow',
     });
-    const data = await res.json();
+
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      Swal.fire({
+        icon: 'error',
+        title: 'Server Error',
+        text: 'Could not read the server response. Check Apache/PHP logs or try again.',
+        confirmButtonColor: '#DD0426',
+      });
+      registerSubmitting = false;
+      btn.disabled = false;
+      btn.textContent = 'Create account';
+      return;
+    }
 
     if (!data.success) {
-      Swal.fire({ icon: 'error', title: 'Error', text: data.message, confirmButtonColor: '#DD0426' });
+      Swal.fire({
+        icon: 'error',
+        title: data.email_error ? 'Email Not Sent' : 'Error',
+        text: data.message || 'Something went wrong. Please try again.',
+        confirmButtonColor: '#DD0426',
+      });
       registerSubmitting = false;
-      btn.disabled = false; btn.textContent = 'Create account';
+      btn.disabled = false;
+      btn.textContent = 'Create account';
       return;
+    }
+
+    // show_otp = Brevo failed on localhost; email_sent = Brevo accepted the send
+    if (data.show_otp && !data.email_sent) {
+      await Swal.fire({
+        icon: 'warning',
+        title: 'No Email Sent',
+        html: `<p style="margin:0 0 12px;line-height:1.6">Brevo did not send an email (check Brevo dashboard logs — nothing will appear until sending works).</p>
+               <p style="margin:0;line-height:1.6"><strong>${data.message}</strong></p>`,
+        confirmButtonColor: '#DD0426',
+      });
+    } else if (data.email_sent) {
+      await Swal.fire({
+        icon: 'success',
+        title: 'Code Sent',
+        html: `<p style="margin:0;line-height:1.6">${data.message}</p>
+               <p style="margin:10px 0 0;font-size:13px;color:#666">The code was sent to your <strong>@evsu.edu.ph</strong> address — not Gmail.</p>`,
+        timer: 3500,
+        showConfirmButton: false,
+        confirmButtonColor: '#DD0426',
+      });
     }
 
     // Save form data for resend feature on verify-account page

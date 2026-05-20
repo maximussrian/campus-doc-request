@@ -1,13 +1,28 @@
 <?php
+require_once __DIR__ . '/_http.php';
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo json_encode(['success' => false, 'message' => 'Method not allowed']); exit; }
+
+$method = api_request_method();
+if ($method === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+if ($method !== 'POST') {
+    http_response_code(405);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Method not allowed. Open the site with https:// and try again.',
+    ]);
+    exit;
+}
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/validation_helper.php';
+require_once __DIR__ . '/brevo_helper.php';
 
 define('ALLOWED_EMAIL_DOMAIN', 'evsu.edu.ph');
 define('STUDENT_NUMBER_PATTERN', '/^\d{4}-\d{5}$/');
@@ -87,7 +102,11 @@ try {
     try { $pdo->exec("ALTER TABLE registration_otps ADD COLUMN sent_at DATETIME NULL"); } catch (PDOException $e) {}
 
     // Remove orphan rows (e.g. from older versions that saved before email was sent)
-    $pdo->prepare('DELETE FROM registration_otps WHERE email = ? AND sent_at IS NULL')->execute([$email]);
+    try {
+        $pdo->prepare('DELETE FROM registration_otps WHERE email = ? AND sent_at IS NULL')->execute([$email]);
+    } catch (PDOException $e) {
+        $pdo->prepare('DELETE FROM registration_otps WHERE email = ?')->execute([$email]);
+    }
 
     // Check if already registered
     $stmt = $pdo->prepare('SELECT id FROM users WHERE student_number = ? OR email = ?');
@@ -163,43 +182,83 @@ try {
     </html>
     HTML;
 
-    $payload = json_encode([
-        'sender'      => ['name' => MAIL_FROM_NAME, 'email' => MAIL_FROM],
-        'to'          => [['email' => $email, 'name' => $fullName]],
-        'subject'     => 'Your EVSU Registration Verification Code',
-        'htmlContent' => $htmlContent,
-    ]);
+    $hostIsLocal = (bool) preg_match('/localhost|127\.0\.0\.1/i', $_SERVER['HTTP_HOST'] ?? '');
+    $devFallback = $hostIsLocal && filter_var(env_str('BREVO_DEV_FALLBACK', '0'), FILTER_VALIDATE_BOOLEAN);
 
-    $ch = curl_init('https://api.brevo.com/v3/smtp/email');
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST           => true,
-        CURLOPT_POSTFIELDS     => $payload,
-        CURLOPT_HTTPHEADER     => [
-            'accept: application/json',
-            'api-key: ' . BREVO_API_KEY,
-            'content-type: application/json',
-        ],
-    ]);
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
+    $mail = ['ok' => false, 'message' => ''];
+    if ($devFallback) {
+        $mail = ['ok' => true, 'message' => 'DEV fallback'];
+    } else {
+        $textContent = "Hi {$fullName},\n\nYour EVSU registration verification code is: {$otp}\n\n"
+            . "Enter this code on the verification page. It expires in 10 minutes.\n\n"
+            . "If you did not request this, ignore this email.";
+        $mail = sendBrevoEmail(
+            $email,
+            $fullName,
+            'Your EVSU Registration Verification Code',
+            $htmlContent,
+            $textContent
+        );
+    }
 
-    if ($httpCode < 200 || $httpCode >= 300) {
+    if (!$mail['ok']) {
+        // Local XAMPP: still save OTP so you can test registration when Brevo is misconfigured
+        if ($hostIsLocal) {
+            $pdo->prepare('DELETE FROM registration_otps WHERE email = ?')->execute([$email]);
+            try {
+                $pdo->prepare('INSERT INTO registration_otps (student_number, names, surnames, email, password_hash, otp_code, expires_at, sent_at)
+                               VALUES (?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE), NOW())')
+                    ->execute([$student_number, $names, $surnames, $email, $passwordHash, $otp]);
+            } catch (PDOException $e) {
+                $pdo->prepare('INSERT INTO registration_otps (student_number, names, surnames, email, password_hash, otp_code, expires_at)
+                               VALUES (?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))')
+                    ->execute([$student_number, $names, $surnames, $email, $passwordHash, $otp]);
+            }
+            echo json_encode([
+                'success'    => true,
+                'email_sent' => false,
+                'show_otp'   => true,
+                'message'    => 'Email could not be sent (' . $mail['message'] . '). Enter this code on the next page: ' . $otp,
+            ]);
+            exit;
+        }
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Failed to send verification email. Please try again.']);
+        echo json_encode(['success' => false, 'email_sent' => false, 'message' => $mail['message'], 'email_error' => true]);
         exit;
     }
 
     // Store OTP only after email succeeds (avoids cooldown lock on failed sends)
     $pdo->prepare('DELETE FROM registration_otps WHERE email = ?')->execute([$email]);
-    $pdo->prepare('INSERT INTO registration_otps (student_number, names, surnames, email, password_hash, otp_code, expires_at, sent_at)
-                   VALUES (?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE), NOW())')
-        ->execute([$student_number, $names, $surnames, $email, $passwordHash, $otp]);
+    try {
+        $pdo->prepare('INSERT INTO registration_otps (student_number, names, surnames, email, password_hash, otp_code, expires_at, sent_at)
+                       VALUES (?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE), NOW())')
+            ->execute([$student_number, $names, $surnames, $email, $passwordHash, $otp]);
+    } catch (PDOException $e) {
+        $pdo->prepare('INSERT INTO registration_otps (student_number, names, surnames, email, password_hash, otp_code, expires_at)
+                       VALUES (?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))')
+            ->execute([$student_number, $names, $surnames, $email, $passwordHash, $otp]);
+    }
 
-    echo json_encode(['success' => true, 'message' => 'Verification code sent to your email.']);
+    if ($devFallback) {
+        echo json_encode([
+            'success'    => true,
+            'email_sent' => false,
+            'show_otp'   => true,
+            'message'    => 'DEV mode (no email sent). Enter this code on the next page: ' . $otp,
+        ]);
+        exit;
+    }
+
+    echo json_encode([
+        'success'    => true,
+        'email_sent' => true,
+        'message'    => 'Verification code sent to ' . $email . '. Check that inbox and spam/junk (not your Gmail). Allow 1–2 minutes.',
+    ]);
 
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Database error. Check Hostinger MySQL settings in .env.']);
+} catch (Throwable $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Server error. Please try again.']);
 }

@@ -17,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/validation_helper.php';
+require_once __DIR__ . '/brevo_helper.php';
 
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
 $email = strtolower(sanitizeText($input['email'] ?? '', MAX_EMAIL_LENGTH));
@@ -59,41 +60,14 @@ try {
 
         // Send OTP via Brevo
         if (!empty(BREVO_API_KEY)) {
-            $payload = [
-                'sender' => ['name' => MAIL_FROM_NAME, 'email' => MAIL_FROM],
-                'to' => [['email' => $email, 'name' => $user['names']]],
-                'subject' => 'Your password reset OTP',
-                'htmlContent' => '<p>Hi ' . htmlspecialchars($user['names']) . ',</p>'
-                    . '<p>Your verification code is: <strong style="font-size:24px;letter-spacing:4px;">' . $otp . '</strong></p>'
-                    . '<p>Enter this code on the reset page. It expires in 10 minutes.</p>'
-                    . '<p>If you did not request this, you can ignore this email.</p>',
-                'textContent' => "Hi {$user['names']},\n\nYour verification code is: {$otp}\n\nEnter this code on the reset page. It expires in 10 minutes.\n\nIf you did not request this, you can ignore this email."
-            ];
-
-            $ch = curl_init('https://api.brevo.com/v3/smtp/email');
-            curl_setopt_array($ch, [
-                CURLOPT_POST => true,
-                CURLOPT_POSTFIELDS => json_encode($payload),
-                CURLOPT_HTTPHEADER => [
-                    'accept: application/json',
-                    'api-key: ' . BREVO_API_KEY,
-                    'content-type: application/json'
-                ],
-                CURLOPT_RETURNTRANSFER => true
-            ]);
-
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $err = curl_error($ch);
-            curl_close($ch);
-
-            if ($err) {
-                throw new \Exception('Brevo request failed: ' . $err);
-            }
-            $result = json_decode($response, true);
-            if ($httpCode >= 400) {
-                $msg = $result['message'] ?? 'Brevo API error';
-                throw new \Exception('Brevo: ' . $msg);
+            $html = '<p>Hi ' . htmlspecialchars($user['names']) . ',</p>'
+                . '<p>Your verification code is: <strong style="font-size:24px;letter-spacing:4px;">' . $otp . '</strong></p>'
+                . '<p>Enter this code on the reset page. It expires in 10 minutes.</p>'
+                . '<p>If you did not request this, you can ignore this email.</p>';
+            $text = "Hi {$user['names']},\n\nYour verification code is: {$otp}\n\nEnter this on the reset page. Expires in 10 minutes.";
+            $mail = sendBrevoEmail($email, $user['names'], 'Your password reset OTP', $html, $text);
+            if (!$mail['ok']) {
+                throw new \Exception($mail['message']);
             }
         } else {
             // Fallback: return OTP for testing (no Brevo)
@@ -107,7 +81,7 @@ try {
 
         echo json_encode([
             'success' => true,
-            'message' => 'Check your email for the verification code.',
+            'message' => 'Code sent to ' . $email . '. Check inbox and spam/junk (allow 1–2 minutes).',
             'verify_url' => 'verify-otp.php?email=' . urlencode($email)
         ]);
     } else {

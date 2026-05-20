@@ -165,11 +165,23 @@ resendBtn.addEventListener('click', async () => {
   resendBtn.textContent = 'Sending...';
 
   try {
-    const res  = await fetch(API + '/send-register-otp.php', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: stored
+    const otpUrl = (API.replace(/\/$/, '') + '/send-register-otp.php');
+    const res  = await fetch(otpUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: stored,
+      cache: 'no-store',
+      credentials: 'same-origin',
     });
-    const data = await res.json();
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      Swal.fire({ icon: 'error', title: 'Server Error', text: 'Could not read the server response.', confirmButtonColor: '#DD0426' });
+      resendBtn.disabled = false;
+      resendBtn.textContent = 'Resend';
+      return;
+    }
 
     if (data.success) {
       // Reset main countdown
@@ -187,11 +199,25 @@ resendBtn.addEventListener('click', async () => {
         if (cd <= 0) { clearInterval(t); resendBtn.disabled = false; resendCD.textContent = ''; }
       }, 1000);
 
-      Swal.fire({ icon: 'success', title: 'Code Resent', text: 'A new code was sent to your email.', timer: 1800, showConfirmButton: false });
+      if (data.show_otp && !data.email_sent) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'No Email Sent',
+          html: `<p style="margin:0;line-height:1.6">${data.message}</p>`,
+          confirmButtonColor: '#DD0426',
+        });
+      } else if (data.email_sent) {
+        Swal.fire({ icon: 'success', title: 'Code Resent', text: data.message || 'A new code was sent to your @evsu.edu.ph inbox.', timer: 1800, showConfirmButton: false });
+      }
       boxes.forEach(b => { b.value = ''; b.classList.remove('filled'); });
       boxes[0].focus();
     } else {
-      Swal.fire({ icon: 'error', title: 'Error', text: data.message, confirmButtonColor: '#DD0426' });
+      Swal.fire({
+        icon: 'error',
+        title: data.email_error ? 'Email Not Sent' : 'Error',
+        text: data.message,
+        confirmButtonColor: '#DD0426',
+      });
       resendBtn.disabled = false;
     }
   } catch (err) {
