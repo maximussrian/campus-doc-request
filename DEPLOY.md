@@ -184,6 +184,20 @@ Hard refresh the live site (**Ctrl+F5**) to bypass browser cache.
 
 You can also trigger deploy manually: **Actions** → **CI/CD Pipeline** → **Run workflow**.
 
+### How to confirm CI/CD updated the live site
+
+1. Wait until [githubstatus.com](https://www.githubstatus.com) shows **Actions** as **Operational** (GitHub outages block all deploys).
+2. Push to `main` or click **Run workflow**.
+3. In **Actions**, open the run and confirm **both** jobs are green:
+   - **Build & Test**
+   - **Deploy to Hostinger**
+4. In the deploy log, look for **Deploy summary** with your commit SHA.
+5. Hard refresh the live site (**Ctrl+F5**) and test **Reports → Monthly Total → Load**.
+
+If **Build & Test** fails with `account is suspended` or `403`, resolve the GitHub account issue first — that is not a Hostinger or code problem.
+
+If **Deploy to Hostinger** fails, check the FTP log. The workflow tries **FTPS first**, then **FTP** as fallback. Verify `FTP_REMOTE_DIR` ends with `/` (e.g. `/public_html/`).
+
 ### What the pipeline protects
 
 | Never deployed from GitHub | Why |

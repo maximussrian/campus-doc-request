@@ -17,6 +17,7 @@ jobs:
   build:
     name: Build & Test
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v6
@@ -67,8 +68,8 @@ jobs:
     name: Deploy to Hostinger
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-    environment: hostinger-production
 
     steps:
       - name: Verify FTP secrets are configured
@@ -92,12 +93,17 @@ jobs:
             echo "See DEPLOY.md section 7 for Hostinger setup steps."
             exit 1
           fi
+          if [[ ! "$FTP_REMOTE_DIR" =~ /$ ]]; then
+            echo "::warning::FTP_REMOTE_DIR should end with / (e.g. /public_html/)"
+          fi
           echo "All FTP secrets present."
 
       - uses: actions/checkout@v6
 
       - name: Sync files to Hostinger (FTPS)
+        id: ftp-deploy
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        continue-on-error: true
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
@@ -107,6 +113,7 @@ jobs:
           local-dir: ./
           server-dir: ${{ secrets.FTP_REMOTE_DIR }}
           log-level: standard
+          dry-run: false
           exclude: |
             **/.git*
             **/.github/**
@@ -124,5 +131,39 @@ jobs:
             **/composer.phar
             **/scripts/**
 
-      - name: Deploy complete
-        run: echo "Live site updated. Hard refresh the browser (Ctrl+F5) to see changes."
+      - name: Sync files to Hostinger (FTP fallback)
+        if: steps.ftp-deploy.outcome == 'failure'
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftp
+          port: 21
+          local-dir: ./
+          server-dir: ${{ secrets.FTP_REMOTE_DIR }}
+          log-level: standard
+          dry-run: false
+          exclude: |
+            **/.git*
+            **/.github/**
+            **/.env
+            **/.env.*
+            **/node_modules/**
+            **/storage/sessions/*
+            !**/storage/sessions/.gitkeep
+            **/storage/logs/**
+            **/*.sql
+            **/DEPLOY.md
+            **/Dockerfile
+            **/render.yaml
+            **/.gitignore
+            **/composer.phar
+            **/scripts/**
+
+      - name: Deploy summary
+        run: |
+          echo "Deployed commit: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Live site should now match GitHub main."
+          echo "Hard refresh browser (Ctrl+F5) after deploy completes."
