@@ -289,7 +289,7 @@
                   <label>Month</label>
                   <input type="month" id="monthlyTotalMonth" class="admin__date-input" style="max-width:160px">
                </div>
-               <button id="loadMonthlyBtn" class="admin__btn-primary"><i class="ri-search-line"></i> Load</button>
+               <button type="button" id="loadMonthlyBtn" class="admin__btn-primary"><i class="ri-search-line"></i> Load</button>
             </div>
             <div id="monthlyTotalResult" class="reports__summary-item all" style="padding:1rem;background:#f8f9fa;border-radius:0.5rem;">
                <span id="monthlyTotalNum">—</span><label id="monthlyTotalLabel">Select month and click Load</label>
@@ -629,6 +629,6 @@
 
    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
    <script src="assets/js/app-config.js"></script>
-   <script src="assets/js/admin-dashboard.js?v=8"></script>
+   <script src="assets/js/admin-dashboard.js?v=10"></script>
 </body>
 </html>

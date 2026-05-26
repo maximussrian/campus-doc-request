@@ -123,11 +123,78 @@ In File Manager, set permissions:
 
 ---
 
-## 7. GitHub (CI only)
+## 7. CI/CD — Auto-deploy to Hostinger (Option B)
 
-Push code to GitHub; `.github/workflows/php.yml` runs PHP checks on push.
+This project uses a **CI/CD pipeline** (`.github/workflows/php.yml`):
 
-Hostinger deploy is **manual upload** (File Manager/FTP) or optional FTP automation later — not required for capstone.
+```
+git push → main
+    ↓
+Build & Test (PHP syntax, composer, smoke tests)
+    ↓
+Deploy to Hostinger (FTPS sync)
+    ↓
+Live site updated
+```
+
+### One-time setup (required before auto-deploy works)
+
+#### Step 1 — Get Hostinger FTP credentials
+
+1. Log in to [Hostinger hPanel](https://hpanel.hostinger.com).
+2. Go to **Files** → **FTP Accounts**.
+3. Note or create an FTP account:
+   - **Host** (e.g. `ftp.yourdomain.com`)
+   - **Username** (e.g. `u123456789`)
+   - **Password**
+4. Confirm the remote folder:
+   - Site at domain root → `/public_html/`
+   - Site in subfolder → `/public_html/docu_request/`
+
+#### Step 2 — Add GitHub repository secrets
+
+Open your GitHub repo → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
+
+Add all four secrets:
+
+| Secret name | Value |
+|-------------|-------|
+| `FTP_SERVER` | FTP host from hPanel (no `ftp://` prefix) |
+| `FTP_USERNAME` | FTP username |
+| `FTP_PASSWORD` | FTP password |
+| `FTP_REMOTE_DIR` | `/public_html/` or `/public_html/docu_request/` |
+
+#### Step 3 — Push and verify
+
+```bash
+git add .
+git commit -m "Enable CI/CD deploy"
+git push origin main
+```
+
+Then in GitHub:
+
+1. Open the **Actions** tab.
+2. Click the latest **CI/CD Pipeline** run.
+3. Confirm both jobs succeed:
+   - **Build & Test**
+   - **Deploy to Hostinger**
+
+Hard refresh the live site (**Ctrl+F5**) to bypass browser cache.
+
+You can also trigger deploy manually: **Actions** → **CI/CD Pipeline** → **Run workflow**.
+
+### What the pipeline protects
+
+| Never deployed from GitHub | Why |
+|----------------------------|-----|
+| `.env` | Server secrets stay on Hostinger only |
+| `storage/sessions/*` | Active user sessions are not wiped |
+| `*.sql` | Database is managed separately |
+
+### Manual fallback (Option A)
+
+If FTP deploy fails, upload changed files via hPanel **File Manager** or FileZilla. Do not overwrite server `.env`.
 
 ---
 
@@ -135,6 +202,8 @@ Hostinger deploy is **manual upload** (File Manager/FTP) or optional FTP automat
 
 | Problem | Fix |
 |---------|-----|
+| **Pushed to GitHub but site unchanged** | FTP secrets not configured yet (see §7). Add all four `FTP_*` secrets, push again, confirm **Deploy to Hostinger** succeeds in Actions, then Ctrl+F5. |
+| **Deploy job failed** | Check Actions log. Common fixes: wrong `FTP_SERVER`, wrong `FTP_REMOTE_DIR`, or FTPS blocked — verify credentials in FileZilla first. |
 | **Database connection failed** | Use `localhost`, correct DB name/user from hPanel (not `root` unless Hostinger says so). |
 | **API / login 404** | Wrong `APP_BASE` — empty at root, `/docu_request` in subfolder. Hard refresh (Ctrl+F5). |
 | **Blank page / 500** | Check PHP version 8.1+; view **Error log** in hPanel. |

@@ -128,6 +128,8 @@ function navigateTo(pageId, filterStatus) {
   if (pageId === 'home' || pageId === 'requests') startRequestsPoll();
   else stopRequestsPoll();
 
+  if (pageId === 'reports' && myPermissions.export_reports) initMonthlyTotal();
+
   closeMobileSidebar();
 }
 
@@ -214,8 +216,6 @@ async function loadDailyWorkload() {
     dateInput.addEventListener('change', loadDailySummaryForDate);
   }
   if (dateInput?.value) loadDailySummaryForDate();
-  const monthlyInput = document.getElementById('monthlyTotalMonth');
-  if (monthlyInput && !monthlyInput.value) monthlyInput.value = new Date().toISOString().slice(0, 7);
   if (!card || !body || !badge) return;
   card.style.display = '';
   try {
@@ -589,25 +589,45 @@ document.getElementById('exportExcelBtn').addEventListener('click', () => {
   if (url) window.location.href = url;
 });
 
-document.getElementById('loadMonthlyBtn')?.addEventListener('click', async () => {
+function initMonthlyTotal() {
+  const input = document.getElementById('monthlyTotalMonth');
+  if (!input || input._bound) return;
+  input._bound = true;
+  if (!input.value) {
+    const now = new Date();
+    input.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  }
+  document.getElementById('loadMonthlyBtn')?.addEventListener('click', loadMonthlyTotal);
+}
+
+async function loadMonthlyTotal() {
   const input = document.getElementById('monthlyTotalMonth');
   const numEl = document.getElementById('monthlyTotalNum');
   const labelEl = document.getElementById('monthlyTotalLabel');
+  const btn = document.getElementById('loadMonthlyBtn');
   if (!input || !numEl || !labelEl) return;
   const m = input.value;
   if (!m) { numEl.textContent = '—'; labelEl.textContent = 'Select month and click Load'; return; }
+  if (btn) { btn.disabled = true; btn.dataset.prevHtml = btn.innerHTML; btn.innerHTML = '<i class="ri-loader-4-line"></i> Loading...'; }
   try {
-    const res = await fetch(API + '/admin-get-report-summary.php?month=' + m, { credentials: 'include' });
+    const res = await fetch(API + '/admin-get-report-summary.php?month=' + encodeURIComponent(m), { credentials: 'include', headers: REG_HEADERS });
     const data = await res.json();
-    if (!data.success) { numEl.textContent = '—'; labelEl.textContent = 'Failed to load'; return; }
-    const fmt = new Date(m + '-01').toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-    numEl.textContent = data.total;
-    labelEl.textContent = 'Total requests for ' + fmt;
+    if (await handleAuthResponse(res, data)) return;
+    if (!data.success) {
+      numEl.textContent = '—';
+      labelEl.textContent = data.message || 'Failed to load';
+      return;
+    }
+    const fmt = new Date(m + '-01T12:00:00').toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    numEl.textContent = String(data.total ?? 0);
+    labelEl.textContent = (data.total === 0 ? 'No requests for ' : 'Total requests for ') + fmt;
   } catch (e) {
     numEl.textContent = '—';
     labelEl.textContent = 'Failed to load';
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = btn.dataset.prevHtml || '<i class="ri-search-line"></i> Load'; }
   }
-});
+}
 
 document.getElementById('clearDates').addEventListener('click', () => {
   document.getElementById('exportDateFrom').value = '';
@@ -1200,6 +1220,7 @@ async function checkMaintenanceAndForceLogout() {
     const initPromises = [loadRequests(), loadStudents(), loadChatList()];
     if (myPermissions.manage_staff) initPromises.push(loadStaff());
     await Promise.all(initPromises);
+    if (myPermissions.export_reports) initMonthlyTotal();
     startRequestsPoll(); // Start realtime poll (home is default page)
   }
 })();

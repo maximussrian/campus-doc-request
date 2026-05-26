@@ -2,7 +2,6 @@
 header('Content-Type: application/json');
 require_once __DIR__ . '/_admin_auth.php';
 requireAdminRole(['developer', 'registrar', 'teller']);
-if (($_SESSION['admin_role'] ?? '') === 'registrar') requirePermission('manage_requests');
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/config.php';
@@ -10,7 +9,14 @@ require_once __DIR__ . '/validation_helper.php';
 
 $date  = validateDate($_GET['date'] ?? '');
 $month = validateMonth($_GET['month'] ?? '');
-$year  = max(2000, min(2100, (int)($_GET['year'] ?? date('Y'))));
+
+if (($_SESSION['admin_role'] ?? '') === 'registrar') {
+    if ($date) {
+        requirePermission('manage_requests');
+    } elseif ($month) {
+        requirePermission('export_reports');
+    }
+}
 
 $deptWhere = '';
 $deptWhereDr = '';

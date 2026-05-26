@@ -48,6 +48,17 @@ Document request management system for students, with teller, registrar, and dev
 
 Forgot password → Enter email → OTP sent via Brevo → Enter OTP on verify page → Reset password
 
+## CI/CD (GitHub → Hostinger)
+
+Pushes to `main` run the **CI/CD Pipeline** (`.github/workflows/php.yml`):
+
+1. **Build & Test** — PHP syntax, Composer validate, smoke tests
+2. **Deploy to Hostinger** — FTPS sync after tests pass
+
+**One-time setup:** add GitHub Actions secrets `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD`, `FTP_REMOTE_DIR`. Full steps in [DEPLOY.md](DEPLOY.md#7-cicd--auto-deploy-to-hostinger-option-b).
+
+After deploy, hard refresh the live site (**Ctrl+F5**).
+
 ## Project Structure
 
 ```
